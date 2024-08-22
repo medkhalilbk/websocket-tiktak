@@ -1,18 +1,17 @@
- 
 FROM node:alpine
- 
+
 WORKDIR /app
- 
+
 COPY package*.json ./
- 
+
 RUN npm install
- 
+
 COPY . .
- 
+
 RUN npm install -g typescript && npm install -g ts-node
 
-RUN tsc
- 
-EXPOSE 8080 
+RUN tsc  # This will now compile to 'dist/' directory
 
-CMD ["node", "server.ts"]
+EXPOSE 8080
+
+CMD ["node", "dist/server.js"]  # Adjust based on your 'outDir'
