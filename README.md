@@ -21,4 +21,4 @@ This is a WebSocket server built using Express, Socket.io, and JWT authenticatio
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License 
