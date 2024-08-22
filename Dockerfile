@@ -15,4 +15,4 @@ RUN tsc
  
 EXPOSE 8080 
 
-CMD ["node", "server.js"]
+CMD ["node", "server.ts"]
