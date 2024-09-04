@@ -22,8 +22,8 @@ io.on("connection", (socket: Socket) => {
   socket.on("deliveryMan-join", (room) => {
     if (!room.deliveryManInfo) {
       return;
-    }
-    
+    }  
+
     const { deliveryManInfo } = room;
     const { id, coords } = deliveryManInfo;
 
@@ -39,16 +39,24 @@ io.on("connection", (socket: Socket) => {
   });
 
   socket.on("companies-notifications", (obj) => { 
-    
     obj.room.forEach((item: any) => {
       console.log(item)
       ordersStatus[item.id] = {status: item.status, totalPrice: item.totalPrice, restaurantName: item.restaurantName,companyId:item.companyId}
     })
+   
     if (obj.room?.length > 0) {
       const companiesIds = obj.room[0].companiesIds;
 
       // Emit to all connected clients (or specify a room if needed) 
       io.emit("waiting-for-delivery", {carts:ordersStatus});
+      obj.room.forEach((item: any) => {  
+        const seenId = new Set<string>()
+        // io.to(item.deliveryManIds).emit("companies-notifications", { room: [item] });
+       item.deliveryManIds.forEach((id: string) => {
+         io.emit(`${id}`, {cart:item,address:obj.address,type:"delivery-request"});
+       })
+      })
+
       io.emit("companies-update", { companyIds: companiesIds, orders: obj.room , type: "new-order" });
       console.log("Emitted companies-update with:", companiesIds);
     }
@@ -58,14 +66,15 @@ io.on("connection", (socket: Socket) => {
     console.log(obj)
     if(obj.type === "order-ready"){
       console.log(ordersStatus)
-      let {companyId,orderId} = obj
-      if(!ordersStatus[orderId].companyId){
+      let {companyId,cartId} = obj
+      if(!ordersStatus[cartId].companyId){
         return;
       }
-      if(ordersStatus[orderId].companyId === companyId){ 
-    ordersStatus[orderId].status = "ready" 
+      if(ordersStatus[cartId].companyId === companyId){ 
+    ordersStatus[cartId].status = "ready" 
        }
-       io.emit("waiting-for-delivery", {carts:ordersStatus});
+
+       io.emit(obj.deliveryManId, {carts:ordersStatus,type:"order-ready"});
     }
   })
    
@@ -85,19 +94,28 @@ io.on("connection", (socket: Socket) => {
 
   socket.on("deliveryMan-update", (obj:any) => {
 
-    const {id, response,orderId,companyId}  = obj 
+    const {id, response,cartId,companyId}  = obj 
 
+   try {
     if (response === "accept") {
       console.log(ordersStatus)
-      ordersStatus[orderId].status = "accepted"
-      ordersStatus[orderId].deliveryManId = id
-      ordersStatus[orderId].companyId = companyId
-      assignDeliveryManService(orderId, id,companyId) 
-      io.emit("waiting-for-delivery", {carts:ordersStatus});
-      io.emit("companies-update", { companyIds: [companyId], orders: [{id:orderId, status:"accepted"}] , type: "order-accept" });
+      if(ordersStatus[cartId]){
+        ordersStatus[cartId].status = "accepted"
+        ordersStatus[cartId].deliveryManId = id
+        ordersStatus[cartId].companyId = companyId
+        assignDeliveryManService(cartId, id,companyId) 
+        io.emit("waiting-for-delivery", {carts:ordersStatus});
+        io.emit("companies-update", { companyIds: [companyId], orders: [{id:cartId, status:"accepted"}] , type: "order-accept" });
+      }else{
+        console.log("it does not exist")
+      }
+     
     }else{
       return; 
     } 
+   } catch (error) {
+    console.log(error)
+   }
   })
   socket.on("waiting-for-delivery", (room) => {
     // Handle waiting-for-delivery event
