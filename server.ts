@@ -99,6 +99,10 @@ io.on("connection", (socket: Socket) => {
     if (response === "accept") {
       console.log(ordersStatus)
       if(ordersStatus[cartId]){
+        if(ordersStatus[cartId].status == "accepted"){
+        io.emit(`${id}` , {type:"already-accepted"} )
+        return ;
+        }
         ordersStatus[cartId].status = "accepted"
         ordersStatus[cartId].deliveryManId = id 
         assignDeliveryManService(cartId, id) 
