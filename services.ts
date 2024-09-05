@@ -3,7 +3,7 @@ require('dotenv').config()
 export function testDotEnv() {
     console.log(process.env.SECRET_KEY)
 }
-export async function assignDeliveryManService(orderId: string, deliveryManId: string, companyId: string) {
+export async function assignDeliveryManService(orderId: string, deliveryManId: string) {
     try {
         let response = await fetch((process.env.API_URL as string) + `/carts/${orderId}/accept` || "http://192.168.1.4:3000/api/carts/" + orderId + "/accept", {
             method: "POST",
