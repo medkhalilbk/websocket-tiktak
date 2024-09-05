@@ -1,11 +1,11 @@
 require('dotenv').config()
 
-export function testDotEnv(){
+export function testDotEnv() {
     console.log(process.env.SECRET_KEY)
 }
-export async function assignDeliveryManService(orderId: string, deliveryManId: string,companyId:string) {
+export async function assignDeliveryManService(orderId: string, deliveryManId: string, companyId: string) {
     try {
-        let response = await fetch((process.env.API_URL as string) + `/carts/${orderId}/accept`|| "http://192.168.1.4:3000/api/carts/"+orderId+"/accept", {
+        let response = await fetch((process.env.API_URL as string) + `/carts/${orderId}/accept` || "http://192.168.1.4:3000/api/carts/" + orderId + "/accept", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -17,6 +17,24 @@ export async function assignDeliveryManService(orderId: string, deliveryManId: s
         return data
     } catch (error) {
         console.log(error)
+    }
+
+}
+
+export async function updateCartDone(cartId: string) {
+    try {
+        let response = await fetch((process.env.API_URL as string) + `/carts/${cartId}/done` || "http://54.155.69.55/api/carts/" + cartId + "/done", {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+        })
+        if (response.status == 200) {
+            return true
+        }
+        return false
+    } catch (error) {
+
     }
 
 }
