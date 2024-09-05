@@ -1,7 +1,6 @@
 import express from "express";
 import http from "http";
-import { Server, Socket } from "socket.io";
-import cors from "cors"
+import { Server, Socket } from "socket.io"; 
 import { assignDeliveryManService, testDotEnv, updateCartDone } from "./services";
 const app = express();
 
@@ -41,7 +40,7 @@ io.on("connection", (socket: Socket) => {
   socket.on("companies-notifications", (obj) => {
     obj.room.forEach((item: any) => {
       console.log(item)
-      ordersStatus[item.id] = {status: item.status, totalPrice: item.totalPrice, restaurantName: item.restaurantName,companyId:item.companyId}
+      ordersStatus[item.id] = {status: item.status, totalPrice: item.totalPrice, restaurantName: item.restaurantName,companiesIds:item.companiesIds}
     })
 
     if (obj.room?.length > 0) {
@@ -67,10 +66,10 @@ io.on("connection", (socket: Socket) => {
     if (obj.type === "order-ready") {
       console.log(ordersStatus)
       let {companyId,cartId} = obj
-      if(!ordersStatus[cartId].companyId){
+      if(ordersStatus[cartId]?.companiesIds.length == 0){
         return;
       }
-      if(ordersStatus[cartId].companyId === companyId){ 
+      if(ordersStatus[cartId].companiesIds.includes(companyId)){ 
     ordersStatus[cartId].status = "ready" 
        }
 
@@ -101,11 +100,10 @@ io.on("connection", (socket: Socket) => {
       console.log(ordersStatus)
       if(ordersStatus[cartId]){
         ordersStatus[cartId].status = "accepted"
-        ordersStatus[cartId].deliveryManId = id
-        ordersStatus[cartId].companyId = companyId
-        assignDeliveryManService(cartId, id,companyId) 
+        ordersStatus[cartId].deliveryManId = id 
+        assignDeliveryManService(cartId, id) 
         io.emit("waiting-for-delivery", {carts:ordersStatus});
-        io.emit("companies-update", { companyIds: [companyId], orders: [{id:cartId, status:"accepted"}] , type: "order-accept" });
+        io.emit("companies-update", { companyIds: ordersStatus[cartId].companiesIds, orders: [{id:cartId, status:"accepted"}] , type: "order-accept" });
       }else{
         console.log("it does not exist")
       }
@@ -119,13 +117,11 @@ io.on("connection", (socket: Socket) => {
   })
 
   socket.on("product-livred", (obj: any) => {
-    const { cartId, companiesIds } = obj
+    const { cartId } = obj
     console.log(cartId)
     try {
       const result = updateCartDone(cartId)
-      companiesIds.forEach((id: string) => {
-        socket.emit(id, { message: `Cart livré a client cartId: ${cartId}` ,type:'cart-livred'})
-      });
+      socket.emit("companies-update" , {companyIds:ordersStatus[cartId].companiesIds, orders: [{id:cartId, status:"done"}], type: "cart-done" })
     } catch (error) {
       console.log(error)
     }
@@ -143,6 +139,4 @@ io.on("connection", (socket: Socket) => {
 server.listen(8080, () => {
   console.log("WebSocket server is running on port 8080");
 });
-
-
-// complete accept process 
+ 
