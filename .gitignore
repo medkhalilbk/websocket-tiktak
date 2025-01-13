@@ -47,7 +47,4 @@ docker-compose.override.yml
 package-lock.json
 yarn.lock
 
-# Environment variable configuration
-.env
-.env.local
-.env.*.local
+ 
